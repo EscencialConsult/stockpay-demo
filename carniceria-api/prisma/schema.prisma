@@ -1,0 +1,375 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ── Catálogo central ──────────────────────────────────────────────────────
+
+model Sucursal {
+  id        String   @id @default(cuid())
+  nombre    String
+  activa    Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  usuarios             Usuario[]
+  movimientosStock     MovimientoStock[]
+  ingresosMedias       IngresoMedia[]
+  snapshots            InventarioSnapshot[]
+  ventasComoOrigen     VentaInterna[]            @relation("origen")
+  ventasComoDestino    VentaInterna[]            @relation("destino")
+  ventas               Venta[]
+  gastosCaja           GastoCaja[]
+  cierresCaja          CierreCajaHistorial[]
+  movimientosCC          MovimientoCuentaCorriente[]
+  alertas                AlertaSistema[]
+  productosProvisionales Producto[] @relation("productosProvisionales")
+}
+
+model Usuario {
+  id           String    @id @default(cuid())
+  nombre       String
+  email        String    @unique
+  passwordHash String
+  rol          Rol
+  sucursalId   String?
+  sucursal     Sucursal? @relation(fields: [sucursalId], references: [id])
+  activo       Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+}
+
+enum Rol {
+  administrador
+  subadministrador
+  socio
+  cajero
+}
+
+model Producto {
+  id               String       @id @default(cuid())
+  descripcion      String
+  plu              String?      @unique
+  codigoEan        String?      @unique
+  familia          String?
+  categoria        String?
+  precio           Decimal      @db.Decimal(10, 2)
+  unidadMedida     UnidadMedida @default(KG)
+  activo           Boolean      @default(true)
+  provisional      Boolean      @default(false) // true mientras espera aprobación del admin
+  sucursalOrigenId String?                       // sucursal que solicitó el alta de urgencia
+  sucursalOrigen   Sucursal?    @relation("productosProvisionales", fields: [sucursalOrigenId], references: [id])
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  yieldProfiles       YieldProfile[]
+  movimientosStock    MovimientoStock[]
+  itemsSnapshot       ItemSnapshot[]
+  ventaInternaDetalle VentaInternaDetalle[]
+  ventaItems          VentaItem[]
+  alertas             AlertaSistema[]
+}
+
+enum UnidadMedida {
+  KG
+  UN
+}
+
+// ── Tabla de rendimientos (global, centralizada) ──────────────────────────
+
+model TipoMedia {
+  id          String   @id @default(cuid())
+  nombre      String   @unique
+  descripcion String?
+  activo      Boolean  @default(true)
+
+  perfiles      YieldProfile[]
+  ingresoMedias IngresoMedia[]
+}
+
+model YieldProfile {
+  id          String    @id @default(cuid())
+  tipoMediaId String
+  tipoMedia   TipoMedia @relation(fields: [tipoMediaId], references: [id])
+  productoId  String
+  producto    Producto  @relation(fields: [productoId], references: [id])
+  porcentaje  Decimal   @db.Decimal(5, 2)
+  activo      Boolean   @default(true)
+  updatedAt   DateTime  @updatedAt
+  updatedBy   String?
+
+  @@unique([tipoMediaId, productoId])
+}
+
+// ── Ingresos de medias reses ──────────────────────────────────────────────
+
+model IngresoMedia {
+  id             String    @id @default(cuid())
+  sucursalId     String
+  sucursal       Sucursal  @relation(fields: [sucursalId], references: [id])
+  tipoMediaId    String
+  tipoMedia      TipoMedia @relation(fields: [tipoMediaId], references: [id])
+  pesoRealKg     Decimal   @db.Decimal(8, 3)
+  pesoDesbasteKg Decimal   @db.Decimal(8, 3)
+  cantidadMedias Int       @default(1)
+  proveedor      String?
+  registradoPor  String
+  fecha          DateTime  @default(now())
+  notas          String?
+
+  desglose MovimientoStock[]
+}
+
+// ── Stock: libro mayor único de movimientos ───────────────────────────────
+
+model MovimientoStock {
+  id             String              @id @default(cuid())
+  sucursalId     String
+  sucursal       Sucursal            @relation(fields: [sucursalId], references: [id])
+  productoId     String
+  producto       Producto            @relation(fields: [productoId], references: [id])
+  tipo           TipoMovimiento
+  cantidad       Decimal             @db.Decimal(10, 3) // positivo = entrada, negativo = salida
+  unidadMedida   UnidadMedida
+  ingresoMediaId String?
+  ingresoMedia   IngresoMedia?       @relation(fields: [ingresoMediaId], references: [id])
+  snapshotId     String?
+  snapshot       InventarioSnapshot? @relation(fields: [snapshotId], references: [id])
+  ventaInternaId String?
+  ventaInterna   VentaInterna?       @relation(fields: [ventaInternaId], references: [id])
+  ventaId        String?
+  venta          Venta?              @relation(fields: [ventaId], references: [id])
+  fecha          DateTime            @default(now())
+  notas          String?
+}
+
+enum TipoMovimiento {
+  ingreso_despiece
+  ingreso_directo
+  venta
+  reserva_venta_interna
+  venta_interna
+  ingreso_interno
+  merma_transito_interno
+  merma_esperada
+  ajuste_inventario
+}
+
+// ── Ajuste de inventario: patrón Snapshot/Conciliación ───────────────────
+
+model InventarioSnapshot {
+  id         String         @id @default(cuid())
+  sucursalId String
+  sucursal   Sucursal       @relation(fields: [sucursalId], references: [id])
+  creadoPor  String
+  fecha      DateTime       @default(now())
+  estado     EstadoSnapshot @default(pendiente)
+
+  items            ItemSnapshot[]
+  movimientosStock MovimientoStock[]
+}
+
+enum EstadoSnapshot {
+  pendiente
+  conciliado
+}
+
+model ItemSnapshot {
+  id           String             @id @default(cuid())
+  snapshotId   String
+  snapshot     InventarioSnapshot @relation(fields: [snapshotId], references: [id])
+  productoId   String
+  producto     Producto           @relation(fields: [productoId], references: [id])
+  unidadMedida UnidadMedida
+  stockTeorico Decimal            @db.Decimal(10, 3)
+  stockFisico  Decimal?           @db.Decimal(10, 3)
+  diferencia   Decimal?           @db.Decimal(10, 3)
+  esFaltante   Boolean?
+
+  @@unique([snapshotId, productoId])
+}
+
+// ── Ventas internas entre sucursales ─────────────────────────────────────
+
+model VentaInterna {
+  id                  String             @id @default(cuid())
+  sucursalOrigenId    String
+  sucursalOrigen      Sucursal           @relation("origen", fields: [sucursalOrigenId], references: [id])
+  sucursalDestinoId   String
+  sucursalDestino     Sucursal           @relation("destino", fields: [sucursalDestinoId], references: [id])
+  estado              EstadoVentaInterna @default(PENDIENTE)
+  fechaEmision        DateTime           @default(now())
+  fechaRecepcion      DateTime?
+  porcentajeDescuento Decimal            @db.Decimal(5, 2)
+  totalImporte        Decimal            @db.Decimal(10, 2)
+  emitidaPor          String
+  confirmadaPor       String?
+
+  detalles         VentaInternaDetalle[]
+  movimientosStock MovimientoStock[]
+}
+
+enum EstadoVentaInterna {
+  PENDIENTE
+  CONFIRMADA
+  RECHAZADA
+}
+
+model VentaInternaDetalle {
+  id                       String       @id @default(cuid())
+  ventaInternaId           String
+  ventaInterna             VentaInterna @relation(fields: [ventaInternaId], references: [id])
+  productoId               String
+  producto                 Producto     @relation(fields: [productoId], references: [id])
+  kilosEnviados            Decimal      @db.Decimal(8, 3)
+  kilosRecibidos           Decimal?     @db.Decimal(8, 3)
+  precioUnitarioOrigen     Decimal      @db.Decimal(10, 2)
+  precioUnitarioDescuento  Decimal      @db.Decimal(10, 2)
+}
+
+// ── POS: Ventas al público ────────────────────────────────────────────────
+
+enum MedioPago {
+  efectivo
+  tarjeta_credito
+  tarjeta_debito
+  qr
+  transferencia
+  billetera_virtual
+  cuenta_corriente
+}
+
+model Venta {
+  id           String   @id @default(cuid())
+  sucursalId   String
+  sucursal     Sucursal @relation(fields: [sucursalId], references: [id])
+  cajeroId     String
+  clienteId    String?                      // presente cuando el pago incluye cuenta_corriente
+  cliente      Cliente? @relation(fields: [clienteId], references: [id])
+  totalImporte Decimal  @db.Decimal(10, 2)
+  fecha        DateTime @default(now())
+
+  items            VentaItem[]
+  pagos            VentaPago[]
+  movimientosStock MovimientoStock[]
+  movimientosCC    MovimientoCuentaCorriente[]
+}
+
+model VentaItem {
+  id             String       @id @default(cuid())
+  ventaId        String
+  venta          Venta        @relation(fields: [ventaId], references: [id])
+  productoId     String
+  producto       Producto     @relation(fields: [productoId], references: [id])
+  cantidad       Decimal      @db.Decimal(8, 3)
+  unidadMedida   UnidadMedida
+  precioUnitario Decimal      @db.Decimal(10, 2)
+  subtotal       Decimal      @db.Decimal(10, 2)
+}
+
+model VentaPago {
+  id        String    @id @default(cuid())
+  ventaId   String
+  venta     Venta     @relation(fields: [ventaId], references: [id])
+  medioPago MedioPago
+  monto     Decimal   @db.Decimal(10, 2)
+}
+
+// ── Clientes y cuentas corrientes ─────────────────────────────────────────
+
+model Cliente {
+  id                   String   @id @default(cuid())
+  nombre               String
+  documento            String?  @unique
+  telefono             String?
+  activo               Boolean  @default(true)
+  saldoCuentaCorriente Decimal  @default(0) @db.Decimal(10, 2) // positivo = el cliente debe
+  createdAt            DateTime @default(now())
+
+  ventas      Venta[]
+  movimientos MovimientoCuentaCorriente[]
+}
+
+enum TipoMovimientoCuenta {
+  DEBITO   // venta: el cliente debe más
+  CREDITO  // pago: el cliente abona su deuda
+}
+
+model MovimientoCuentaCorriente {
+  id              String               @id @default(cuid())
+  clienteId       String
+  cliente         Cliente              @relation(fields: [clienteId], references: [id])
+  sucursalId      String
+  sucursal        Sucursal             @relation(fields: [sucursalId], references: [id])
+  ventaId         String?
+  venta           Venta?               @relation(fields: [ventaId], references: [id])
+  tipo            TipoMovimientoCuenta
+  monto           Decimal              @db.Decimal(10, 2) // siempre positivo
+  saldoResultante Decimal              @db.Decimal(10, 2) // saldo del cliente luego del movimiento
+  fecha           DateTime             @default(now())
+  notas           String?
+}
+
+// ── Cierre de caja ────────────────────────────────────────────────────────
+
+model GastoCaja {
+  id            String   @id @default(cuid())
+  sucursalId    String
+  sucursal      Sucursal @relation(fields: [sucursalId], references: [id])
+  concepto      String
+  monto         Decimal  @db.Decimal(10, 2)
+  registradoPor String
+  fecha         DateTime @default(now())
+}
+
+model CierreCajaHistorial {
+  id          String   @id @default(cuid())
+  sucursalId  String
+  sucursal    Sucursal @relation(fields: [sucursalId], references: [id])
+  fechaDia    DateTime
+  cajeroId    String
+  totalVentas Decimal  @db.Decimal(10, 2)
+  totalGastos Decimal  @db.Decimal(10, 2)
+  cerradoEn   DateTime @default(now())
+
+  detalles CierreDetallePago[]
+}
+
+model CierreDetallePago {
+  id             String              @id @default(cuid())
+  cierreId       String
+  cierre         CierreCajaHistorial @relation(fields: [cierreId], references: [id])
+  medioPago      MedioPago
+  montoSistema   Decimal             @db.Decimal(10, 2)
+  montoDeclarado Decimal             @db.Decimal(10, 2)
+  diferencia     Decimal             @db.Decimal(10, 2)
+}
+
+// ── Alertas del sistema ───────────────────────────────────────────────────
+
+model AlertaSistema {
+  id         String   @id @default(cuid())
+  sucursalId String
+  sucursal   Sucursal @relation(fields: [sucursalId], references: [id])
+  productoId String
+  producto   Producto @relation(fields: [productoId], references: [id])
+  tipo       String   // 'stock_negativo_5_dias'
+  detalle    String?
+  resuelta   Boolean  @default(false)
+  creadaEn   DateTime @default(now())
+}
+
+// ── Alta remota de urgencia: PIN de un solo uso ───────────────────────────
+
+model PinEmergencia {
+  id                String    @id @default(cuid())
+  pinHash           String    // SHA-256(pin + JWT_SECRET) — no se guarda en claro
+  sucursalDestinoId String?   // null = válido en cualquier sucursal
+  generadoPor       String    // userId del admin/subadmin
+  venceEn           DateTime  // TTL: 30 minutos desde la generación
+  usadoEn           DateTime? // se registra al consumirse; bloquea segundo uso
+  activo            Boolean   @default(true)
+  creadoEn          DateTime  @default(now())
+}

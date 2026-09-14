@@ -1,0 +1,35 @@
+services:
+  carniceria-db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: carniceria
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: carniceria
+    volumes:
+      - carniceria-db-data:/var/lib/postgresql/data
+    networks:
+      - carniceria-net
+    # Sin "ports": igual que n8n-postgres, solo alcanzable desde la red de Docker.
+
+  carniceria-backend:
+    build:
+      context: ./carniceria-api
+    container_name: carniceria-backend
+    restart: unless-stopped
+    depends_on:
+      - carniceria-db
+    environment:
+      DATABASE_URL: postgresql://carniceria:${DB_PASSWORD}@carniceria-db:5432/carniceria
+      JWT_SECRET: ${JWT_SECRET}
+      PORT: 3001
+    ports:
+      - "8083:3001"
+    networks:
+      - carniceria-net
+
+networks:
+  carniceria-net:
+
+volumes:
+  carniceria-db-data:

@@ -1,0 +1,47 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Reset base para POS — no dark mode, sin márgenes de template */
+:root {
+  font-family: 'Exo 2', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color-scheme: light;
+}
+
+body {
+  margin: 0;
+  background: #f9fafb;
+  color: #111827;
+}
+
+#root {
+  width: 100%;
+  min-height: 100svh;
+}
+
+/* ── Impresión de ticket ────────────────────────────────────────────────── */
+
+@media print {
+  .no-print { display: none !important; }
+  .print-only { display: block !important; }
+}
+
+.print-only {
+  display: none;
+}
+
+@media print {
+  body {
+    background: white;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+  }
+
+  .ticket {
+    width: 80mm;
+    margin: 0 auto;
+    padding: 8px;
+  }
+}

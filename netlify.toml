@@ -1,0 +1,24 @@
+[build]
+  base      = "carniceria-app"
+  command   = "npm run build"
+  publish   = "dist"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+[build.processing]
+  skip_processing = true
+
+# Proxy hacia el backend en x270-server (carniceria-backend) — mismo origen para el
+# navegador, cero CORS. Reemplazar la URL cuando el Tailscale Funnel quede arriba
+# (ver deploy-x270/README.md, paso 4-5).
+[[redirects]]
+  from   = "/api/*"
+  to     = "https://x270-server.taild45448.ts.net:10000/api/:splat"
+  status = 200
+  force  = true
+
+[[redirects]]
+  from   = "/*"
+  to     = "/index.html"
+  status = 200
