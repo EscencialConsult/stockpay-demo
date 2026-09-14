@@ -16,5 +16,6 @@ COPY src ./src
 
 EXPOSE 3001
 
-# migrate deploy aplica las migraciones pendientes sin pedir confirmación (a diferencia de "migrate dev")
-CMD ["sh", "-c", "npx prisma migrate deploy && node src/app.js"]
+# El proyecto no tiene carpeta prisma/migrations (se desarrolló con "prisma db push"),
+# así que en el contenedor también usamos db push para crear las tablas contra el esquema.
+CMD ["sh", "-c", "npx prisma db push --accept-data-loss --skip-generate && node src/app.js"]
