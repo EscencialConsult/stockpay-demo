@@ -1,0 +1,26 @@
+/**
+ * COLORES DE MARCA — el único archivo que hay que tocar para vender este
+ * sistema con otra marca.
+ *
+ * Todo el resto del diseño (botones, tablas, estados, la barra de
+ * navegación, todo) está armado sobre estas 8 variables — nunca sobre un
+ * color suelto. Cambiar estos ocho valores cambia la app entera.
+ *
+ * Después de editar este archivo:
+ *   1. node scripts/set-brand-icon.mjs <logo-del-cliente.png>   (el ícono)
+ *   2. Cambiar "productName" en package.json                    (el nombre)
+ *   3. npm run dist                                              (recompilar)
+ *
+ * Ver MANUAL-DESARROLLADOR.md para la guía completa.
+ */
+:root {
+  --one-negro: #000000;
+  --one-oscuro: #1a181d;
+  --one-blanco: #fefeff;
+  --one-fucsia: #e17bd7;
+  --one-fucsia-dark: #b85aae;
+  --one-cian: #6be1e3;
+  --one-dorado: #e4c76a;
+  --one-gris-lavanda: #a4a8c0;
+  --one-gris-claro: #c6c9d7;
+}

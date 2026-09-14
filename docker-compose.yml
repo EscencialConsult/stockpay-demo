@@ -1,0 +1,17 @@
+services:
+  stockpay-web-backend:
+    build:
+      context: .
+    container_name: stockpay-web-backend
+    restart: unless-stopped
+    environment:
+      PORT: 8001
+      JWT_SECRET: ${JWT_SECRET}
+      DATA_DIR: /data
+    volumes:
+      - stockpay-web-data:/data
+    ports:
+      - "8084:8001"
+
+volumes:
+  stockpay-web-data:

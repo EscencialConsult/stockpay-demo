@@ -1,0 +1,5 @@
+{
+  "_comentario": "Copiar este archivo a private-config.json (sin .example) antes de compilar un release. Ese archivo NO se commitea — queda solo en la máquina que compila, y termina empaquetado adentro del instalador para que la app instalada pueda chequear actualizaciones contra GitHub Releases (repo privado).",
+  "updateToken": "",
+  "_updateToken": "Fine-grained personal access token de GitHub, de solo lectura, con acceso únicamente al repo EscencialConsult/Minimercado-POS (permiso 'Contents: Read-only' alcanza). Se crea en GitHub → Settings → Developer settings → Fine-grained tokens."
+}

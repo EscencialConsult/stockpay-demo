@@ -1,0 +1,23 @@
+[build]
+  command   = "npm run build"
+  publish   = "dist"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+[build.processing]
+  skip_processing = true
+
+# Proxy hacia el backend (stockpay-web-backend) en x270-server — mismo origen
+# para el navegador, cero CORS. Actualizar la URL una vez que el túnel/funnel
+# del backend quede arriba (ver deploy-x270/README.md).
+[[redirects]]
+  from   = "/api/*"
+  to     = "https://PENDIENTE-actualizar/api/:splat"
+  status = 200
+  force  = true
+
+[[redirects]]
+  from   = "/*"
+  to     = "/index.html"
+  status = 200

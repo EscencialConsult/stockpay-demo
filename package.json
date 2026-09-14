@@ -1,0 +1,95 @@
+{
+  "name": "stockpay-web-demo",
+  "version": "2.3.17",
+  "description": "Demo web de StockPay (sin Electron) para mostrar el sistema a clientes sin instalar nada",
+  "author": "Hosting Domain",
+  "private": true,
+  "main": "electron/main.js",
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently -k \"vite\" \"wait-on http://127.0.0.1:5173 && electron .\"",
+    "dev:web": "concurrently -k \"node server/standalone.js\" \"vite\"",
+    "build": "vite build",
+    "start": "electron .",
+    "start:web": "node server/standalone.js",
+    "preview": "vite preview",
+    "smoke": "node scripts/smoke-api.mjs && node scripts/smoke-lan.mjs",
+    "dist": "vite build && electron-builder --win",
+    "serve-updates": "node scripts/serve-updates.mjs"
+  },
+  "build": {
+    "appId": "com.storepos.app",
+    "productName": "StockPay",
+    "copyright": "Copyright © Hosting Domain",
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "publish": [
+      {
+        "provider": "generic",
+        "url": "http://127.0.0.1:8899",
+        "channel": "latest"
+      }
+    ],
+    "asar": false,
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "server/**/*",
+      "build/icon.ico",
+      "public/favicon.ico",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "StockPay",
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico",
+      "installerHeaderIcon": "build/icon.ico"
+    }
+  },
+  "dependencies": {
+    "@fontsource-variable/exo-2": "^5.3.0",
+    "@fontsource-variable/jost": "^5.3.0",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "electron-log": "^5.2.4",
+    "electron-updater": "^6.3.9",
+    "express": "^4.21.2",
+    "express-rate-limit": "^7.5.0",
+    "jsbarcode": "^3.12.3",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^1.4.5-lts.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "sql.js": "^1.12.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.5",
+    "@vitejs/plugin-react": "^4.3.4",
+    "concurrently": "^9.1.2",
+    "electron": "^33.4.11",
+    "electron-builder": "^25.1.8",
+    "png-to-ico": "^3.0.2",
+    "sharp": "^0.35.4",
+    "typescript": "^5.7.3",
+    "vite": "^6.0.7",
+    "wait-on": "^8.0.2"
+  }
+}

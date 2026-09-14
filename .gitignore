@@ -1,0 +1,23 @@
+node_modules/
+dist/
+release/
+
+# El instalador se copia a landing/ solo para el deploy manual a Netlify
+# (ver M-Desarrollador/StockPay-Alta-de-Cliente.md, paso 10) — no se commitea,
+# pesa decenas de MB y ya queda alojado en Netlify.
+landing/*.exe
+landing/*.blockmap
+*.log
+.DS_Store
+.env
+.vite/
+*.db
+*.db-journal
+.playwright-mcp/
+.netlify/
+
+# Token de solo-lectura para que la app instalada chequee actualizaciones
+# contra GitHub Releases (repo privado) — nunca se commitea. Se crea a
+# mano en cada máquina que va a compilar un release, copiando
+# electron/private-config.example.json. Ver electron/main.js.
+electron/private-config.json
