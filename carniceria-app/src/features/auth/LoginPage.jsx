@@ -66,12 +66,12 @@ export default function LoginPage() {
       <DemoDisclaimer />
       <div className="bg-white border border-gray-200 rounded-lg p-10 w-full max-w-sm shadow-sm">
 
-        <div className="flex justify-center mb-8">
-          <img src="/one-logonegro.webp" alt="ONE" className="h-8 opacity-90" />
+        <div className="flex justify-center mb-6">
+          <img src="/stockpay-logo.png" alt="StockPay" className="h-14" />
         </div>
 
         <h1 className="text-xl font-semibold text-gray-900 mb-1 text-center font-titulo">
-          Sistema de Gestión
+          StockPay Web
         </h1>
         <p className="text-sm text-gray-500 text-center mb-8">Ingresá con tu cuenta</p>
 

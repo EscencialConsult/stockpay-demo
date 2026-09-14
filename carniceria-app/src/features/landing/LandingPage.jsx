@@ -6,14 +6,14 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center px-4">
       <div className="max-w-2xl w-full text-center">
-        <img src="/one-logonegro.webp" alt="ONE" className="h-10 mx-auto mb-8 opacity-90" />
+        <img src="/stockpay-logo.png" alt="StockPay" className="h-16 mx-auto mb-6" />
 
         <h1 className="text-3xl font-bold text-gray-900 font-titulo mb-3">
-          Sistema de Gestión para Carnicerías
+          StockPay <span className="text-gray-400 font-normal">Web</span>
         </h1>
         <p className="text-base text-gray-500 mb-10 max-w-lg mx-auto">
-          Control de stock, ventas, cuentas corrientes y caja para negocios con una o varias
-          sucursales, todo en un solo lugar.
+          La versión web y multi-sucursal de StockPay: control de stock, ventas, cuentas
+          corrientes y caja para negocios con más de un local, conectados por internet.
         </p>
 
         <button
