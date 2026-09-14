@@ -1,5 +1,9 @@
 FROM node:20-alpine
 
+# Prisma necesita OpenSSL en la imagen; alpine no lo trae instalado por defecto
+# y sin esto el "schema engine" de Prisma tira "Could not parse schema engine response".
+RUN apk add --no-cache openssl
+
 WORKDIR /app
 
 COPY package.json package-lock.json ./

@@ -1,35 +1,35 @@
 services:
-  carniceria-db:
+  stockpay-db:
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_USER: carniceria
+      POSTGRES_USER: stockpay
       POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: carniceria
+      POSTGRES_DB: stockpay
     volumes:
-      - carniceria-db-data:/var/lib/postgresql/data
+      - stockpay-db-data:/var/lib/postgresql/data
     networks:
-      - carniceria-net
+      - stockpay-net
     # Sin "ports": igual que n8n-postgres, solo alcanzable desde la red de Docker.
 
-  carniceria-backend:
+  stockpay-backend:
     build:
       context: ./carniceria-api
-    container_name: carniceria-backend
+    container_name: stockpay-backend
     restart: unless-stopped
     depends_on:
-      - carniceria-db
+      - stockpay-db
     environment:
-      DATABASE_URL: postgresql://carniceria:${DB_PASSWORD}@carniceria-db:5432/carniceria
+      DATABASE_URL: postgresql://stockpay:${DB_PASSWORD}@stockpay-db:5432/stockpay
       JWT_SECRET: ${JWT_SECRET}
       PORT: 3001
     ports:
       - "8083:3001"
     networks:
-      - carniceria-net
+      - stockpay-net
 
 networks:
-  carniceria-net:
+  stockpay-net:
 
 volumes:
-  carniceria-db-data:
+  stockpay-db-data:
