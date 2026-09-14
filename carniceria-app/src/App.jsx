@@ -9,6 +9,7 @@ import { PosLayout } from './layouts/PosLayout.jsx'
 
 import PosPage            from './features/pos/PosPage.jsx'
 import LoginPage          from './features/auth/LoginPage.jsx'
+import LandingPage        from './features/landing/LandingPage.jsx'
 import DashboardPage      from './features/dashboard/DashboardPage.jsx'
 import CatalogPage        from './features/catalogo/CatalogPage.jsx'
 import InventarioPage     from './features/inventario/InventarioPage.jsx'
@@ -70,7 +71,7 @@ export default function App() {
                 </Route>
               </Route>
 
-              <Route path="/"  element={<Navigate to="/login" replace />} />
+              <Route path="/"  element={<LandingPage />} />
               <Route path="*"  element={<Navigate to="/login" replace />} />
             </Routes>
           </BrowserRouter>

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../core/AuthContext.jsx'
 import { MOCK_USERS } from '../../mocks/data.js'
+import { DemoDisclaimer } from './DemoDisclaimer.jsx'
 
 // Sin backend aún: autenticación visual contra usuarios demo
 const DEMO_MODE = true
@@ -62,6 +63,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <DemoDisclaimer />
       <div className="bg-white border border-gray-200 rounded-lg p-10 w-full max-w-sm shadow-sm">
 
         <div className="flex justify-center mb-8">
