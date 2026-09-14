@@ -45,31 +45,23 @@ arquitectura más grande (una base por sesión) — avisar si se necesita antes 
      "cd ~/stockpay-web-demo && docker compose up -d --build"
    ```
 
-4. **Publicar el puerto 8084 a internet.** Los 3 puertos públicos de Tailscale Funnel del nodo
-   (443, 8443, 10000) ya están usados por Core-Talent, Kaplan-front y StockPay (Carnicería web).
-   Opciones, en orden de preferencia:
-   - Probar ruta con path dentro de un puerto ya público (no confirmado si Tailscale lo
-     soporta sin pisar el mapping raíz existente):
-     ```bash
-     tailscale funnel --bg --https=10000 --set-path=/stockpay-web http://127.0.0.1:8084
-     tailscale funnel status   # confirmar que el mapping de "/" a stockpay-backend sigue ahí
-     ```
-   - Si eso rompe o no es soportado: túnel de Cloudflare (quick tunnel) como contenedor
-     aparte — la URL (`*.trycloudflare.com`) cambia cada vez que se recrea el contenedor, no
-     sirve para un link que se guarde permanente, pero desbloquea la demo ya:
-     ```yaml
-     stockpay-web-tunnel:
-       image: cloudflare/cloudflared:latest
-       command: tunnel --no-autoupdate --url http://stockpay-web-backend:8001
-       restart: unless-stopped
-     ```
-   - Para un link estable de verdad sin usar los 3 puertos de Funnel: un Cloudflare Tunnel
-     con NOMBRE (no "quick tunnel") da una URL fija — requiere `cloudflared tunnel login`
-     (login interactivo por navegador), así que ese paso puntual lo tiene que hacer Facundo,
-     no se puede automatizar sin esa sesión de browser.
+4. **Publicar el puerto 8084 a internet — resuelto con Tailscale Funnel, sin Cloudflare**
+   (Facundo confirmó 2026-09-14: nada de túneles de Cloudflare nuevos, solo Tailscale).
+   Los 3 puertos públicos del nodo (443, 8443, 10000) ya estaban usados por Core-Talent,
+   Kaplan-front y `stockpay-backend`, así que se agregó una ruta por PATH dentro del puerto
+   10000 ya público, sin pisar el mapping raíz existente:
+   ```bash
+   tailscale funnel --bg --https=10000 --set-path=/stockpay-web http://127.0.0.1:8084
+   tailscale funnel status   # confirmar que "/" (stockpay-backend) sigue intacto
+   ```
+   Confirmado funcionando 2026-09-14: `https://x270-server.taild45448.ts.net:10000/` sigue
+   yendo a `stockpay-backend` y `https://x270-server.taild45448.ts.net:10000/stockpay-web/`
+   va a este backend. Si algún día se necesita reconstruir este mapping (reinicio del
+   servicio de Tailscale, etc.), correr el mismo comando de arriba.
 
-5. **Actualizar `netlify.toml`**: reemplazar `https://PENDIENTE-actualizar` en el redirect
-   `/api/*` por la URL real del paso 4.
+5. **`netlify.toml`** ya tiene el redirect `/api/*` apuntando a
+   `https://x270-server.taild45448.ts.net:10000/stockpay-web/api/:splat` — no hace falta
+   tocarlo salvo que cambie el path o el puerto.
 
 6. **Auto-deploy con cron:**
    ```bash
