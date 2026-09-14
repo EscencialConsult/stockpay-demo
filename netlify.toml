@@ -8,12 +8,13 @@
 [build.processing]
   skip_processing = true
 
-# Proxy hacia el backend (stockpay-web-backend) en x270-server — mismo origen
-# para el navegador, cero CORS. Actualizar la URL una vez que el túnel/funnel
-# del backend quede arriba (ver deploy-x270/README.md).
+# Proxy hacia el backend (stockpay-web-backend) en x270-server, publicado por
+# Tailscale Funnel con path /stockpay-web dentro del puerto 10000 (compartido
+# con stockpay-backend en la raíz "/", sin pisarlo). Mismo origen para el
+# navegador, cero CORS.
 [[redirects]]
   from   = "/api/*"
-  to     = "https://PENDIENTE-actualizar/api/:splat"
+  to     = "https://x270-server.taild45448.ts.net:10000/stockpay-web/api/:splat"
   status = 200
   force  = true
 
