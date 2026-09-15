@@ -339,10 +339,13 @@
 
   <main class="content">
     <div class="topbar">
-      <span class="topbar-crumb" id="crumb">StockPay / Inicio</span>
-      <span class="topbar-chip">
-        <img class="av" id="topbar-logo" alt="" />
-        <span data-field="name">ONE By Escencial</span>
+      <span class="topbar-crumb" id="crumb">StockPay DEMO / Inicio</span>
+      <span style="display:flex; align-items:center; gap:0.6rem;">
+        <span class="pill dot" style="margin:0;">DEMO</span>
+        <span class="topbar-chip">
+          <img class="av" id="topbar-logo" alt="" />
+          <span data-field="name">ONE By Escencial</span>
+        </span>
       </span>
     </div>
     <div class="view-body">
@@ -350,6 +353,7 @@
     <!-- ═══════════════ INICIO ═══════════════ -->
     <section class="view active" id="view-inicio">
       <span class="pill dot">Compra confirmada</span>
+      <span class="pill dot" style="margin-left:0.5rem;">DEMO</span>
       <h1>Bienvenido, <span data-field="name">ONE By Escencial</span></h1>
       <p class="lead">
         Tu copia de StockPay ya está lista, con tu nombre y tu marca. Acá tenés todo lo que
@@ -623,10 +627,10 @@
   const views = document.querySelectorAll('.view');
   const crumb = document.getElementById('crumb');
   const CRUMBS = {
-    inicio: 'StockPay / Inicio',
-    software: 'StockPay / Software',
-    funcionamiento: 'StockPay / Funcionamiento',
-    ayuda: 'StockPay / Preguntas y contacto',
+    inicio: 'StockPay DEMO / Inicio',
+    software: 'StockPay DEMO / Software',
+    funcionamiento: 'StockPay DEMO / Funcionamiento',
+    ayuda: 'StockPay DEMO / Preguntas y contacto',
   };
   function goTo(name) {
     tabs.forEach((t) => t.classList.toggle('active', t.dataset.tab === name));
