@@ -580,6 +580,58 @@ button { cursor: pointer; }
 .login-card p { margin: 0 0 1.25rem; color: var(--muted); }
 .login-card .field { text-align: left; }
 
+/* Panel grande de aviso: esta es la versión web de demostración, no el
+   producto instalado. Va al lado del login, siempre visible (no es un modal
+   que se cierre y no vuelva a aparecer) — pensado para que un vendedor se lo
+   señale a un prospecto cada vez que abre la demo. */
+.login-hero {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+  align-items: center;
+  justify-content: center;
+  max-width: 980px;
+  width: 100%;
+  position: relative;
+}
+
+.demo-web-banner {
+  width: min(480px, 100%);
+  padding: 2rem;
+  position: relative;
+  text-align: left;
+}
+
+.demo-web-banner .pill {
+  display: inline-block;
+  padding: 0.3rem 0.75rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--one-fucsia) 20%, transparent);
+  color: var(--one-fucsia);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  margin-bottom: 0.9rem;
+}
+
+.demo-web-banner h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1.5rem;
+  font-family: var(--titulo);
+  font-weight: 700;
+}
+
+.demo-web-banner p {
+  margin: 0 0 0.75rem;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.demo-web-banner p:last-child { margin-bottom: 0; }
+
+.demo-web-banner strong { color: var(--ink); }
+
 .onboarding-steps {
   display: flex;
   gap: 0.4rem;

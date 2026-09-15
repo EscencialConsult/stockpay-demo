@@ -18,6 +18,14 @@
   status = 200
   force  = true
 
+# La landing real de StockPay (Portal del cliente) es la puerta de entrada.
+# El botón "Descargar" de esa página ya apunta a /index.html en vez de al
+# instalador — entra directo al login web, no descarga nada.
+[[redirects]]
+  from   = "/"
+  to     = "/landing/index.html"
+  status = 200
+
 [[redirects]]
   from   = "/*"
   to     = "/index.html"
