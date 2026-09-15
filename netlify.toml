@@ -19,10 +19,16 @@
   force  = true
 
 # La landing real de StockPay (Portal del cliente) es la puerta de entrada.
-# El botón "Descargar" de esa página ya apunta a /index.html en vez de al
-# instalador — entra directo al login web, no descarga nada.
-# force=true es imprescindible: sin esto Netlify sirve dist/index.html
-# directo para "/" (existe como archivo) y nunca llega a mirar este redirect.
+# El botón "Descargar" de esa página apunta a /login (no a /index.html) en
+# vez de al instalador — entra directo al login web, no descarga nada.
+# Dos gotchas reales encontrados acá:
+# 1) force=true es imprescindible: sin esto Netlify sirve dist/index.html
+#    directo para "/" (existe como archivo) y nunca llega a mirar este redirect.
+# 2) el link de "Descargar" NO puede apuntar a /index.html: este sitio tiene
+#    "Pretty URLs" activado (post-processing de Netlify), que reescribe
+#    automáticamente cualquier href="/index.html" del HTML servido a href="/"
+#    — por eso se usa /login (no es un archivo real, cae en el catch-all de
+#    abajo) en vez del nombre de archivo real.
 [[redirects]]
   from   = "/"
   to     = "/landing/index.html"
