@@ -21,10 +21,13 @@
 # La landing real de StockPay (Portal del cliente) es la puerta de entrada.
 # El botón "Descargar" de esa página ya apunta a /index.html en vez de al
 # instalador — entra directo al login web, no descarga nada.
+# force=true es imprescindible: sin esto Netlify sirve dist/index.html
+# directo para "/" (existe como archivo) y nunca llega a mirar este redirect.
 [[redirects]]
   from   = "/"
   to     = "/landing/index.html"
   status = 200
+  force  = true
 
 [[redirects]]
   from   = "/*"

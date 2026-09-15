@@ -580,57 +580,54 @@ button { cursor: pointer; }
 .login-card p { margin: 0 0 1.25rem; color: var(--muted); }
 .login-card .field { text-align: left; }
 
-/* Panel grande de aviso: esta es la versión web de demostración, no el
-   producto instalado. Va al lado del login, siempre visible (no es un modal
-   que se cierre y no vuelva a aparecer) — pensado para que un vendedor se lo
-   señale a un prospecto cada vez que abre la demo. */
-.login-hero {
+/* Toast de aviso "versión web de demo" — mismo patrón visual que
+   .update-banner (ver UpdateNotifier), con cerrar/omitir/no molestar. */
+.demo-web-toast {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  width: min(360px, calc(100vw - 2rem));
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 1rem;
+  z-index: 70;
+}
+
+.demo-web-toast-head {
   display: flex;
-  flex-wrap: wrap;
-  gap: 2rem;
-  align-items: center;
-  justify-content: center;
-  max-width: 980px;
-  width: 100%;
-  position: relative;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.3rem;
 }
 
-.demo-web-banner {
-  width: min(480px, 100%);
-  padding: 2rem;
-  position: relative;
-  text-align: left;
-}
-
-.demo-web-banner .pill {
+.demo-web-toast .pill {
   display: inline-block;
-  padding: 0.3rem 0.75rem;
+  padding: 0.25rem 0.65rem;
   border-radius: 999px;
   background: color-mix(in srgb, var(--one-fucsia) 20%, transparent);
   color: var(--one-fucsia);
-  font-size: 0.78rem;
+  font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0.02em;
   text-transform: uppercase;
-  margin-bottom: 0.9rem;
 }
 
-.demo-web-banner h2 {
-  margin: 0 0 0.75rem;
-  font-size: 1.5rem;
-  font-family: var(--titulo);
-  font-weight: 700;
-}
-
-.demo-web-banner p {
-  margin: 0 0 0.75rem;
+.demo-web-toast-close {
+  border: 0;
+  background: transparent;
   color: var(--muted);
-  line-height: 1.55;
+  cursor: pointer;
+  font-size: 1.1rem;
+  line-height: 1;
+  padding: 0.1rem 0.3rem;
 }
+.demo-web-toast-close:hover { color: var(--ink); }
 
-.demo-web-banner p:last-child { margin-bottom: 0; }
-
-.demo-web-banner strong { color: var(--ink); }
+.demo-web-toast p { margin: 0.6rem 0; font-size: 0.88rem; color: var(--muted); line-height: 1.5; }
+.demo-web-toast strong { color: var(--ink); }
 
 .onboarding-steps {
   display: flex;

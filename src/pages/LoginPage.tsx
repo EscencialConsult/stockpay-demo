@@ -47,26 +47,10 @@ export default function LoginPage() {
 
   return (
     <div className="login-wrap">
-      <div className="login-hero">
-        <div className="panel demo-web-banner">
-          <span className="pill">Versión web de demostración</span>
-          <h2>Esto no es el programa instalado</h2>
-          <p>
-            Es <strong>{PRODUCT_NAME}</strong> corriendo en el navegador, con la misma lógica
-            que la aplicación real: Caja, Catálogo, Clientes, Cierre de caja y Equipo
-            funcionan igual que en la computadora del negocio.
-          </p>
-          <p>
-            Se usa para <strong>mostrarle el sistema a un cliente sin instalar nada</strong> —
-            esta copia no es la que se entrega, no tiene la marca del cliente puesta, y los
-            datos que ves acá son de ejemplo, compartidos por todas las demos.
-          </p>
-        </div>
-
-        <form className="panel login-card" onSubmit={onSubmit}>
-          <img className="login-logo" src="./logo.png" alt="" />
-          <h1>{PRODUCT_NAME}</h1>
-          <p>Iniciá sesión para abrir la caja</p>
+      <form className="panel login-card" onSubmit={onSubmit}>
+        <img className="login-logo" src="./logo.png" alt="" />
+        <h1>{PRODUCT_NAME}</h1>
+        <p>Iniciá sesión para abrir la caja</p>
 
         {(serverError || error) && <div className="error">{serverError || error}</div>}
 
@@ -137,8 +121,7 @@ export default function LoginPage() {
             )}
           </div>
         )}
-        </form>
-      </div>
+      </form>
     </div>
   );
 }

@@ -2,6 +2,7 @@ import { useAuth } from './context/AuthContext';
 import LoginPage from './pages/LoginPage';
 import PosPage from './pages/PosPage';
 import UpdateNotifier from './components/UpdateNotifier';
+import DemoWebNotice from './components/DemoWebNotice';
 import { useFlechasEnLaPantalla } from './lib/flechasEnLaPantalla';
 import { PRODUCT_NAME } from './config/textos';
 
@@ -23,7 +24,10 @@ export default function App() {
       ) : user ? (
         <PosPage />
       ) : (
-        <LoginPage />
+        <>
+          <LoginPage />
+          <DemoWebNotice />
+        </>
       )}
       <UpdateNotifier />
     </>
