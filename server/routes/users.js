@@ -36,11 +36,19 @@ function resolvePerms(body, role) {
 
 // El modo "Servidor de red" escucha en 0.0.0.0 — cualquiera en la misma LAN
 // del comercio puede intentar fuerza bruta contra bcrypt sin este freno.
-// 5 intentos cada 15 minutos por IP alcanza para un uso normal y frena un
-// ataque automatizado sin necesitar ninguna cuenta ni servicio externo.
+// En el producto real (una sola instalación, un solo local) 5 intentos cada
+// 15 minutos por IP alcanza. Acá NO: esta es la demo web pública, una sola
+// instancia compartida por todos los vendedores/prospectos que la prueben al
+// mismo tiempo, y además el login pasa por Netlify + Tailscale Funnel, que
+// puede hacer que varios visitantes distintos aparezcan con la misma IP de
+// origen ante Express. Con el límite de 5 alcanzó con probar el botón de
+// "Accesos rápidos demo" (admin+encargado+cajero) un par de veces para
+// trabar el login para todo el mundo. Subido a un número mucho más laxo,
+// pensado para absorber esos falsos positivos sin dejar de frenar un
+// ataque automatizado real.
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  limit: 5,
+  limit: 200,
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Demasiados intentos. Esperá unos minutos antes de volver a intentar.' },
