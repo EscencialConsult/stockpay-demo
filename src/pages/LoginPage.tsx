@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { getPosBridge } from '../bridge';
 import { MODES, MODE_LABELS } from '../config/modes';
 import Selector from '../components/Selector';
+import DemoQuickAccess from '../components/DemoQuickAccess';
 import { PRODUCT_NAME } from '../config/textos';
 
 export default function LoginPage() {
@@ -16,18 +17,22 @@ export default function LoginPage() {
   const [serverIp, setServerIp] = useState(apiInfo?.serverIp || '');
   const [connMsg, setConnMsg] = useState<string | null>(null);
 
-  const onSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const doLogin = async (user: string, pass: string) => {
     setError(null);
     setBusy(true);
     try {
       await refreshApiInfo();
-      await login(username.trim(), password);
+      await login(user.trim(), pass);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No se pudo iniciar sesión');
     } finally {
       setBusy(false);
     }
+  };
+
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await doLogin(username, password);
   };
 
   const saveConnection = async () => {
@@ -77,6 +82,8 @@ export default function LoginPage() {
         <button className="b pri" type="submit" disabled={busy} style={{ width: '100%', justifyContent: 'center' }}>
           {busy ? 'Ingresando…' : 'Ingresar'}
         </button>
+
+        <DemoQuickAccess busy={busy} onSelectRole={(user, pass) => doLogin(user, pass)} />
 
         {(needsConn || showConn) && (
           <div style={{ marginTop: '1.25rem', borderTop: '1px solid var(--line)', paddingTop: '1rem' }}>

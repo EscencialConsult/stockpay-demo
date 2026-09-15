@@ -405,6 +405,31 @@ function seedDefaults() {
     ).run(hash);
   }
 
+  // Usuarios demo adicionales (encargado, cajero) — específico de esta demo
+  // web, no del producto real (un cliente real arranca solo con el admin).
+  // Sirven para los "Accesos rápidos" del login (ver DemoQuickAccess.tsx).
+  const DEMO_ROLE_USERS = [
+    { id: 2, username: 'encargado', fullname: 'Encargado Demo', role: 'encargado' },
+    { id: 3, username: 'cajero', fullname: 'Cajero Demo', role: 'cajero' },
+  ];
+  for (const u of DEMO_ROLE_USERS) {
+    const exists = db.prepare('SELECT id FROM users WHERE id = ?').get(u.id);
+    if (!exists) {
+      const hash = bcrypt.hashSync(u.username, 10);
+      const perms = permsForRole(u.role);
+      db.prepare(
+        `INSERT INTO users (
+          id, username, password, fullname, role,
+          perm_products, perm_categories, perm_transactions, perm_users, perm_settings
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      ).run(
+        u.id, u.username, hash, u.fullname, u.role,
+        perms.perm_products, perms.perm_categories, perms.perm_transactions,
+        perms.perm_users, perms.perm_settings
+      );
+    }
+  }
+
   const settings = db.prepare('SELECT id FROM settings WHERE id = 1').get();
   if (!settings) {
     db.prepare(
