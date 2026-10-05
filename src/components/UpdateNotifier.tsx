@@ -33,6 +33,13 @@ function setDismissedVersion(version: string) {
   }
 }
 
+/** Velocidad de descarga legible: "850 KB/s" o "2.3 MB/s". */
+function velocidad(bytesPerSecond: number): string {
+  if (!bytesPerSecond) return '';
+  if (bytesPerSecond >= 1024 * 1024) return `${(bytesPerSecond / (1024 * 1024)).toFixed(1)} MB/s`;
+  return `${Math.round(bytesPerSecond / 1024)} KB/s`;
+}
+
 type HistoryEntry = UpdateInfo & { downloadedAt: string };
 
 function loadHistory(): HistoryEntry[] {
@@ -114,7 +121,13 @@ export default function UpdateNotifier() {
               <button
                 type="button"
                 className="b pri"
-                onClick={() => getPosBridge().downloadUpdate()}
+                onClick={() => {
+                  // Cambia de inmediato: el primer dato de progreso tarda unos
+                  // segundos y, mientras tanto, el botón tiene que dar señal.
+                  setProgress(null);
+                  setPhase('downloading');
+                  getPosBridge().downloadUpdate();
+                }}
               >
                 Descargar
               </button>
@@ -138,13 +151,26 @@ export default function UpdateNotifier() {
         {phase === 'downloading' && (
           <>
             <strong>Descargando actualización…</strong>
-            <div className="update-progress">
-              <div
-                className="update-progress-fill"
-                style={{ width: `${Math.round(progress?.percent || 0)}%` }}
-              />
-            </div>
-            <p className="muted">{Math.round(progress?.percent || 0)}%</p>
+            {progress && progress.percent > 0 ? (
+              <>
+                <div className="update-progress">
+                  <div
+                    className="update-progress-fill"
+                    style={{ width: `${Math.round(progress.percent)}%` }}
+                  />
+                </div>
+                <p className="muted">
+                  {Math.round(progress.percent)}% · {velocidad(progress.bytesPerSecond)}
+                </p>
+              </>
+            ) : (
+              <>
+                <div className="update-progress indeterminate">
+                  <div className="update-progress-fill" />
+                </div>
+                <p className="muted">Preparando la descarga, puede tardar unos segundos. No cierres la app.</p>
+              </>
+            )}
           </>
         )}
 

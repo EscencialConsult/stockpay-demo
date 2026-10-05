@@ -1432,6 +1432,25 @@ button { cursor: pointer; }
   transition: width 0.2s ease;
 }
 
+/* Sin porcentaje todavía: una barra que se desplaza para mostrar que algo está pasando. */
+.update-progress.indeterminate .update-progress-fill {
+  width: 35%;
+  animation: update-indeterminate 1.2s ease-in-out infinite;
+}
+
+@keyframes update-indeterminate {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(300%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .update-progress.indeterminate .update-progress-fill {
+    animation: none;
+    width: 100%;
+    opacity: 0.5;
+  }
+}
+
 .update-history-link {
   display: block;
   width: 100%;
