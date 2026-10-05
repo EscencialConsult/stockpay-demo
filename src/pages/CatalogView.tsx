@@ -6,6 +6,7 @@ import MenuAcciones from '../components/MenuAcciones';
 import PrintLabel from '../components/PrintLabel';
 import CargaVencimientos from '../components/CargaVencimientos';
 import VencimientosModal from '../components/VencimientosModal';
+import AvisoVencimientos from '../components/AvisoVencimientos';
 import { sanitizeDecimal, sanitizeInteger } from '../lib/numericInput';
 import {
   COLOR_ESTADO,
@@ -192,6 +193,11 @@ export default function CatalogView({
 
   return (
     <div>
+      <AvisoVencimientos
+        products={list}
+        visible={vencimientosOn}
+        onOpen={() => setShowVencimientos(true)}
+      />
       <div className="tabs" style={{ border: 0, borderRadius: 'var(--rad)', marginBottom: '1rem' }}>
         {canProducts && (
           <button

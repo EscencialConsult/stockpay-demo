@@ -22,6 +22,7 @@ import {
   etiquetaMedio,
 } from '../config/pagos';
 import { sanitizeDecimal } from '../lib/numericInput';
+import AvisoVencimientos from '../components/AvisoVencimientos';
 
 type Props = {
   products: Product[];
@@ -380,6 +381,7 @@ export default function TillView({
 
   return (
     <>
+      <AvisoVencimientos products={products} visible={settings?.features?.expiry === true} />
       {error && (
         <div className="error">
           {error}{' '}
