@@ -1,5 +1,26 @@
 import { useEffect, useState } from 'react';
-import { api, Settings } from '../api/client';
+import { api, Features, FEATURES_DEFAULT, Settings } from '../api/client';
+
+/** Textos de cada módulo. Apagar uno nunca borra datos (se explica abajo en la pantalla). */
+const MODULOS: { key: keyof Features; label: string; descripcion: string }[] = [
+  {
+    key: 'stock',
+    label: 'Gestión de stock',
+    descripcion:
+      'Cantidad por producto, límites al vender y descuento automático en cada venta. Apagado, la caja vende sin controlar cantidades.',
+  },
+  {
+    key: 'images',
+    label: 'Gestión de imágenes',
+    descripcion: 'Subir fotos a los productos y mostrarlas en el catálogo y en la caja.',
+  },
+  {
+    key: 'expiry',
+    label: 'Gestión de vencimientos',
+    descripcion:
+      'Fecha de vencimiento por producto, carga por lote con historial y modal de vencimientos del stock.',
+  },
+];
 import { useAuth } from '../context/AuthContext';
 import { getPosBridge } from '../bridge';
 import PhotoPicker from '../components/PhotoPicker';
@@ -28,6 +49,7 @@ export default function SettingsView({ settings, onSaved }: Props) {
     till: '1',
     ip: '',
   });
+  const [features, setFeatures] = useState<Features>(FEATURES_DEFAULT);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [demoBusy, setDemoBusy] = useState(false);
@@ -51,6 +73,7 @@ export default function SettingsView({ settings, onSaved }: Props) {
         till: String(s?.till || info.till || 1),
         ip: s?.ip || info.serverIp || '',
       });
+      setFeatures(s?.features ?? FEATURES_DEFAULT);
     })();
   }, [settings]);
 
@@ -69,6 +92,10 @@ export default function SettingsView({ settings, onSaved }: Props) {
         serverIp: form.ip,
         till: parseInt(form.till, 10) || 1,
       });
+
+      fd.append('feature_expiry', features.expiry ? '1' : '0');
+      fd.append('feature_stock', features.stock ? '1' : '0');
+      fd.append('feature_images', features.images ? '1' : '0');
 
       await api.saveSettings(fd);
 
@@ -221,6 +248,33 @@ export default function SettingsView({ settings, onSaved }: Props) {
             </p>
           )}
         </div>
+      </div>
+
+      <div style={{ marginTop: '1.5rem' }}>
+        <h3 style={{ marginTop: 0, fontFamily: 'var(--titulo)' }}>Módulos</h3>
+        <p className="muted" style={{ fontSize: '0.9rem', marginTop: 0 }}>
+          Prendé solo lo que usa el negocio. Apagar un módulo lo oculta, pero no borra nada: al
+          volver a prenderlo, todo queda como lo dejaste.
+        </p>
+        {MODULOS.map((m) => (
+          <label
+            key={m.key}
+            style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start', marginBottom: '0.75rem' }}
+          >
+            <input
+              type="checkbox"
+              style={{ marginTop: '0.25rem' }}
+              checked={features[m.key]}
+              onChange={(e) => setFeatures({ ...features, [m.key]: e.target.checked })}
+            />
+            <span>
+              <strong>{m.label}</strong>
+              <span className="muted" style={{ display: 'block', fontSize: '0.85rem' }}>
+                {m.descripcion}
+              </span>
+            </span>
+          </label>
+        ))}
       </div>
 
       <button type="button" className="b pri" onClick={save} style={{ marginTop: '1rem' }}>

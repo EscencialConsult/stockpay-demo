@@ -3,6 +3,7 @@ import {
   api,
   Category,
   Customer,
+  FEATURES_DEFAULT,
   Product,
   Settings,
   Transaction,
@@ -118,6 +119,7 @@ export default function PosPage() {
           symbol={symbol}
           canProducts={hasPerm('perm_products')}
           canCategories={hasPerm('perm_categories')}
+          features={settings?.features ?? FEATURES_DEFAULT}
           onChanged={loadAll}
         />
       )}

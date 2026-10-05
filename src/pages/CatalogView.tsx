@@ -1,10 +1,18 @@
 import { useEffect, useState } from 'react';
-import { api, Category, Product, getUploadsBase } from '../api/client';
+import { api, Category, Features, Product, getUploadsBase } from '../api/client';
 import PhotoPicker from '../components/PhotoPicker';
 import Selector from '../components/Selector';
 import MenuAcciones from '../components/MenuAcciones';
 import PrintLabel from '../components/PrintLabel';
+import CargaVencimientos from '../components/CargaVencimientos';
+import VencimientosModal from '../components/VencimientosModal';
 import { sanitizeDecimal, sanitizeInteger } from '../lib/numericInput';
+import {
+  COLOR_ESTADO,
+  estadoVencimiento,
+  formatearFecha,
+  textoDias,
+} from '../lib/vencimientos';
 
 type Props = {
   products: Product[];
@@ -12,6 +20,7 @@ type Props = {
   symbol: string;
   canProducts: boolean;
   canCategories: boolean;
+  features: Features;
   onChanged: () => Promise<void>;
 };
 
@@ -24,6 +33,7 @@ const emptyProduct = {
   trackStock: true,
   img: '',
   code: '',
+  expires_on: '',
 };
 
 export default function CatalogView({
@@ -32,9 +42,12 @@ export default function CatalogView({
   symbol,
   canProducts,
   canCategories,
+  features,
   onChanged,
 }: Props) {
-  const [tab, setTab] = useState<'products' | 'categories'>(
+  // Vencimientos depende de su módulo: apagado, la pestaña y el modal no existen.
+  const vencimientosOn = canProducts && features.expiry;
+  const [tab, setTab] = useState<'products' | 'categories' | 'expiry'>(
     canProducts ? 'products' : 'categories'
   );
   const [list, setList] = useState(products);
@@ -47,6 +60,7 @@ export default function CatalogView({
   const [selected, setSelected] = useState<number[]>([]);
   const [busy, setBusy] = useState(false);
   const [labelProduct, setLabelProduct] = useState<Product | null>(null);
+  const [showVencimientos, setShowVencimientos] = useState(false);
   const uploads = getUploadsBase();
 
   useEffect(() => {
@@ -54,6 +68,11 @@ export default function CatalogView({
     setCats(categories);
     setSelected((prev) => prev.filter((id) => products.some((p) => p.id === id)));
   }, [products, categories]);
+
+  // Si se apaga Vencimientos con la pestaña abierta, no se queda en una pantalla vacía.
+  useEffect(() => {
+    if (tab === 'expiry' && !vencimientosOn) setTab(canProducts ? 'products' : 'categories');
+  }, [tab, vencimientosOn, canProducts]);
 
   const saveProduct = async () => {
     if (!form.name.trim()) {
@@ -70,6 +89,7 @@ export default function CatalogView({
     fd.append('stock', form.trackStock ? '1' : 'on');
     fd.append('img', form.img);
     fd.append('code', form.code.trim());
+    fd.append('expires_on', form.expires_on);
     await api.saveProduct(fd);
     setForm(emptyProduct);
     await onChanged();
@@ -85,6 +105,7 @@ export default function CatalogView({
       trackStock: !!p.stock,
       img: p.img || '',
       code: p.code || '',
+      expires_on: p.expires_on || '',
     });
     setTab('products');
   };
@@ -181,6 +202,15 @@ export default function CatalogView({
             Productos
           </button>
         )}
+        {vencimientosOn && (
+          <button
+            type="button"
+            className={`tab ${tab === 'expiry' ? 'act' : ''}`}
+            onClick={() => setTab('expiry')}
+          >
+            Vencimientos
+          </button>
+        )}
         {canCategories && (
           <button
             type="button"
@@ -192,6 +222,11 @@ export default function CatalogView({
         )}
         {canProducts && (
           <div style={{ marginLeft: 'auto', display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+            {vencimientosOn && (
+              <button type="button" className="b" onClick={() => setShowVencimientos(true)}>
+                Ver vencimientos
+              </button>
+            )}
             <button type="button" className="b" disabled={busy} onClick={seedDemo}>
               Cargar datos de ejemplo
             </button>
@@ -252,6 +287,7 @@ export default function CatalogView({
                 tiene, dejalo vacío — al guardar se genera uno propio, listo para imprimir.
               </p>
             </div>
+            {features.stock && (
             <label
               style={{
                 display: 'flex',
@@ -267,7 +303,8 @@ export default function CatalogView({
               />
               Controlar inventario
             </label>
-            {form.trackStock && (
+            )}
+            {features.stock && form.trackStock && (
               <div className="field">
                 <label>Cantidad disponible</label>
                 <input
@@ -277,11 +314,28 @@ export default function CatalogView({
                 />
               </div>
             )}
+            {features.expiry && (
+            <div className="field">
+              <label htmlFor="prod-vencimiento">Fecha de vencimiento</label>
+              <input
+                id="prod-vencimiento"
+                type="date"
+                value={form.expires_on}
+                onChange={(e) => setForm({ ...form, expires_on: e.target.value })}
+              />
+              <p className="muted" style={{ fontSize: '0.78rem', margin: '0.3rem 0 0' }}>
+                Opcional. Si cargás varios productos con la misma fecha, usá la pestaña
+                Vencimientos: ahí la fecha queda fija y no hay que tipearla de nuevo.
+              </p>
+            </div>
+            )}
+            {features.images && (
             <PhotoPicker
               value={form.img}
               onChange={(img) => setForm({ ...form, img })}
               suggestedQuery={form.name || form.category}
             />
+            )}
             <div style={{ display: 'flex', gap: '0.5rem' }}>
               <button type="button" className="b pri" onClick={saveProduct}>
                 {form.id ? 'Actualizar' : 'Agregar'} producto
@@ -316,12 +370,12 @@ export default function CatalogView({
                         aria-label="Seleccionar todos los visibles"
                       />
                     </th>
-                    <th />
+                    {features.images && <th />}
                     <th>ID</th>
                     <th>Nombre</th>
                     <th>Código</th>
                     <th className="d">Precio</th>
-                    <th className="d">Stock</th>
+                    {features.stock && <th className="d">Stock</th>}
                     <th />
                   </tr>
                 </thead>
@@ -336,6 +390,7 @@ export default function CatalogView({
                           aria-label={`Seleccionar ${p.name}`}
                         />
                       </td>
+                      {features.images && (
                       <td>
                         {p.img ? (
                           <img
@@ -353,19 +408,32 @@ export default function CatalogView({
                           <span className="muted">—</span>
                         )}
                       </td>
+                      )}
                       <td className="cod">{p.id}</td>
                       <td>
                         <div>{p.name}</div>
                         <div className="muted" style={{ fontSize: '0.8rem', marginTop: '0.15rem' }}>
                           {p.category || 'Sin categoría'}
                         </div>
+                        {features.expiry && p.expires_on && (
+                          <div
+                            style={{
+                              fontSize: '0.78rem',
+                              marginTop: '0.15rem',
+                              color: COLOR_ESTADO[estadoVencimiento(p.expires_on) ?? 'ok'],
+                              fontWeight: 600,
+                            }}
+                          >
+                            Vence {formatearFecha(p.expires_on)} · {textoDias(p.expires_on)}
+                          </div>
+                        )}
                       </td>
                       <td className="cod">{p.code}</td>
                       <td className="d">
                         {symbol}
                         {Number(p.price).toFixed(2)}
                       </td>
-                      <td className="d">{p.stock ? p.quantity : '—'}</td>
+                      {features.stock && <td className="d">{p.stock ? p.quantity : '—'}</td>}
                       <td>
                         <MenuAcciones
                           label={`Acciones para ${p.name}`}
@@ -384,6 +452,10 @@ export default function CatalogView({
             {!visible.length && <div className="empty">Todavía no hay productos</div>}
           </div>
         </div>
+      )}
+
+      {tab === 'expiry' && vencimientosOn && (
+        <CargaVencimientos products={list} onChanged={onChanged} />
       )}
 
       {tab === 'categories' && canCategories && (
@@ -437,6 +509,11 @@ export default function CatalogView({
         </div>
       )}
 
+      <VencimientosModal
+        open={showVencimientos && vencimientosOn}
+        onClose={() => setShowVencimientos(false)}
+        products={list}
+      />
       <PrintLabel product={labelProduct} symbol={symbol} onDone={() => setLabelProduct(null)} />
     </div>
   );

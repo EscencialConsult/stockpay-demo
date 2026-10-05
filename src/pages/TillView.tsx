@@ -84,6 +84,10 @@ export default function TillView({
   const [editandoCantidadId, setEditandoCantidadId] = useState<number | null>(null);
 
   const symbol = settings?.symbol || '$';
+  // Módulos (Configuración › Módulos): con stock apagado la caja no limita ni
+  // muestra cantidades; con imágenes apagadas no muestra fotos. Los datos quedan guardados.
+  const stockOn = settings?.features?.stock !== false;
+  const imagenesOn = settings?.features?.images !== false;
   const taxRate = settings?.charge_tax ? Number(settings.percentage) || 0 : 0;
   const uploads = getUploadsBase();
   const till = apiInfo?.till || settings?.till || 1;
@@ -157,6 +161,7 @@ export default function TillView({
   const itemCount = cart.reduce((sum, i) => sum + i.quantity, 0);
 
   const stockLabel = (p: Product) => {
+    if (!stockOn) return null;
     if (!p.stock) return { text: 'Sin límite de stock', className: 'stock-badge' };
     if (p.quantity <= 0) return { text: 'Sin stock', className: 'stock-badge out' };
     if (p.quantity <= 5) return { text: `Quedan ${p.quantity}`, className: 'stock-badge low' };
@@ -164,7 +169,8 @@ export default function TillView({
   };
 
   const addToCart = (product: Product) => {
-    if (product.stock && product.quantity <= 0) {
+    const controla = stockOn && !!product.stock;
+    if (controla && product.quantity <= 0) {
       setError(`${product.name} no tiene stock`);
       return;
     }
@@ -172,7 +178,7 @@ export default function TillView({
     setCart((prev) => {
       const existing = prev.find((i) => i.id === product.id);
       if (existing) {
-        if (product.stock && existing.quantity >= product.quantity) {
+        if (controla && existing.quantity >= product.quantity) {
           setError(`Solo hay ${product.quantity} disponibles de ${product.name}`);
           return prev;
         }
@@ -438,9 +444,9 @@ export default function TillView({
                   type="button"
                   className="product-tile"
                   onClick={() => addToCart(p)}
-                  disabled={!!p.stock && p.quantity <= 0}
+                  disabled={stockOn && !!p.stock && p.quantity <= 0}
                 >
-                  {p.img ? (
+                  {p.img && imagenesOn ? (
                     <div className="product-thumb-wrap">
                       <img className="product-thumb" src={`${uploads}/${p.img}`} alt="" />
                     </div>
@@ -455,7 +461,7 @@ export default function TillView({
                       {symbol}
                       {Number(p.price).toFixed(2)}
                     </span>
-                    <span className={stock.className}>{stock.text}</span>
+                    {stock && <span className={stock.className}>{stock.text}</span>}
                   </div>
                 </button>
               );

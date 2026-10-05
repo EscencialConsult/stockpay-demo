@@ -292,6 +292,21 @@ export async function initDatabase(filePath) {
 
     CREATE INDEX IF NOT EXISTS idx_closures_till ON till_closures(till);
     CREATE INDEX IF NOT EXISTS idx_closures_created ON till_closures(created_at);
+
+    -- Historial de cargas de vencimiento: una fila cada vez que se asigna o
+    -- cambia la fecha de un producto. product_name queda como foto del
+    -- nombre al momento de la carga, así el historial sigue legible aunque
+    -- el producto después se renombre o se borre.
+    CREATE TABLE IF NOT EXISTS expiry_log (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      product_id INTEGER NOT NULL,
+      product_name TEXT NOT NULL DEFAULT '',
+      expires_on TEXT NOT NULL DEFAULT '',
+      user_name TEXT NOT NULL DEFAULT '',
+      created_at TEXT NOT NULL
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_expiry_log_created ON expiry_log(created_at);
   `);
 
   migrateSchema();
@@ -307,6 +322,18 @@ function migrateSchema() {
     db.exec(`ALTER TABLE settings ADD COLUMN pexels_api_key TEXT NOT NULL DEFAULT ''`);
   }
 
+  // Módulos opcionales (Configuración › Módulos). Apagar uno NO borra datos:
+  // solo oculta la función y deja de tocar esa parte al guardar. Defaults:
+  // stock e imágenes ya existían, así que arrancan prendidos; vencimientos
+  // es nuevo, arranca apagado.
+  if (!settingsNames.has('feature_expiry')) {
+    db.exec(`
+      ALTER TABLE settings ADD COLUMN feature_expiry INTEGER NOT NULL DEFAULT 0;
+      ALTER TABLE settings ADD COLUMN feature_stock INTEGER NOT NULL DEFAULT 1;
+      ALTER TABLE settings ADD COLUMN feature_images INTEGER NOT NULL DEFAULT 1;
+    `);
+  }
+
   const productCols = db.prepare('PRAGMA table_info(products)').all();
   const productNames = new Set(productCols.map((c) => c.name));
   if (!productNames.has('code')) {
@@ -318,6 +345,12 @@ function migrateSchema() {
     for (const row of rows) {
       update.run(generateEan13(row.id), row.id);
     }
+  }
+
+  // Fecha de vencimiento por producto ('' = sin vencimiento). Formato
+  // AAAA-MM-DD: ordena bien como texto y no tiene líos de zona horaria.
+  if (!productNames.has('expires_on')) {
+    db.exec(`ALTER TABLE products ADD COLUMN expires_on TEXT NOT NULL DEFAULT ''`);
   }
 
   const customerCols = db.prepare('PRAGMA table_info(customers)').all();
@@ -481,6 +514,19 @@ export function mapProduct(row) {
     stock: row.stock,
     img: row.img,
     code: row.code,
+    expires_on: row.expires_on || '',
+  };
+}
+
+export function mapExpiryLog(row) {
+  if (!row) return null;
+  return {
+    id: row.id,
+    product_id: row.product_id,
+    product_name: row.product_name,
+    expires_on: row.expires_on,
+    user_name: row.user_name,
+    created_at: row.created_at,
   };
 }
 
@@ -598,6 +644,24 @@ export function mapSettings(row) {
       img: row.img,
       till: row.till,
       ip: row.server_ip,
+      features: {
+        expiry: !!row.feature_expiry,
+        stock: !!row.feature_stock,
+        images: !!row.feature_images,
+      },
     },
+  };
+}
+
+/** Módulos prendidos/apagados, leídos en cada uso (no cacheados) para que un
+ * cambio en Configuración se aplique en la siguiente operación sin reiniciar. */
+export function getFeatures() {
+  const row = getDb()
+    .prepare('SELECT feature_expiry, feature_stock, feature_images FROM settings WHERE id = 1')
+    .get();
+  return {
+    expiry: !!row?.feature_expiry,
+    stock: row ? !!row.feature_stock : true,
+    images: row ? !!row.feature_images : true,
   };
 }

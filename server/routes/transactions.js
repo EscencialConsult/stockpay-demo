@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getDb, mapTransaction } from '../db.js';
+import { getDb, getFeatures, mapTransaction } from '../db.js';
 import { requirePerm } from '../auth.js';
 import { CUENTA_CORRIENTE_PAYMENT_TYPE } from '../constants.js';
 
@@ -30,6 +30,10 @@ const router = Router();
  * sola, nunca queda una venta con la mitad del carrito descontado.
  */
 function decrementInventory(items, db) {
+  // Con el módulo de stock apagado la venta no valida ni descuenta nada:
+  // las cantidades guardadas quedan como estaban para cuando se vuelva a prender.
+  if (!getFeatures().stock) return;
+
   // Agrupado por id ANTES de validar: la UI siempre fusiona un producto
   // repetido en una sola línea de carrito, pero la API no puede asumir eso.
   // Si dos líneas separadas pidieran el mismo producto, validar línea por

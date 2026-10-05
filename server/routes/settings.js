@@ -42,6 +42,17 @@ export default function settingsRouter(uploadsPath) {
       }
 
       const existing = getDb().prepare('SELECT * FROM settings WHERE id = 1').get();
+      // Si una bandera no viene en el form (ej. el asistente de primer uso),
+      // se conserva la actual en vez de apagarla por omisión.
+      const flag = (value, current) => {
+        if (value === undefined) return current ? 1 : 0;
+        return value === '1' || value === 'on' || value === true || value === 1 ? 1 : 0;
+      };
+      const features = {
+        expiry: flag(body.feature_expiry, existing?.feature_expiry),
+        stock: flag(body.feature_stock, existing?.feature_stock ?? 1),
+        images: flag(body.feature_images, existing?.feature_images ?? 1),
+      };
       const payload = {
         app: body.app || existing?.app || 'Standalone Point of Sale',
         store: body.store ?? existing?.store ?? '',
@@ -63,7 +74,8 @@ export default function settingsRouter(uploadsPath) {
           `UPDATE settings SET
             app = ?, store = ?, address_one = ?, address_two = ?, contact = ?,
             tax = ?, symbol = ?, percentage = ?, charge_tax = ?, footer = ?,
-            img = ?, till = ?, server_ip = ?
+            img = ?, till = ?, server_ip = ?,
+            feature_expiry = ?, feature_stock = ?, feature_images = ?
            WHERE id = 1`
         )
         .run(
@@ -79,7 +91,10 @@ export default function settingsRouter(uploadsPath) {
           payload.footer,
           payload.img,
           payload.till,
-          payload.server_ip
+          payload.server_ip,
+          features.expiry,
+          features.stock,
+          features.images
         );
 
       const row = getDb().prepare('SELECT * FROM settings WHERE id = 1').get();

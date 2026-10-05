@@ -28,6 +28,17 @@ export type Product = {
   img: string;
   /** Código de barras — propio (generado, EAN-13 interno) o el de fábrica si se tipeó/escaneó. */
   code: string;
+  /** Vencimiento AAAA-MM-DD; '' = sin vencimiento. */
+  expires_on: string;
+};
+
+export type ExpiryLogEntry = {
+  id: number;
+  product_id: number;
+  product_name: string;
+  expires_on: string;
+  user_name: string;
+  created_at: string;
 };
 
 export type Category = {
@@ -74,7 +85,18 @@ export type Settings = {
   img: string;
   till: number;
   ip: string;
+  features: Features;
 };
+
+/** Módulos opcionales de Configuración › Módulos. Apagarlos no borra datos. */
+export type Features = {
+  expiry: boolean;
+  stock: boolean;
+  images: boolean;
+};
+
+/** Valores si el servidor todavía no mandó features (no debería pasar). */
+export const FEATURES_DEFAULT: Features = { expiry: false, stock: true, images: true };
 
 export type MedioBreakdown = {
   valor: number;
@@ -261,6 +283,15 @@ export const api = {
 
   deleteProduct: (id: number) =>
     request(`/inventory/product/${id}`, { method: 'DELETE' }),
+
+  setProductExpiry: (productId: number, expiresOn: string) =>
+    request<Product>('/inventory/product/expiry', {
+      method: 'POST',
+      body: JSON.stringify({ productId, expires_on: expiresOn }),
+    }),
+
+  getExpiryLog: (limit = 50) =>
+    request<ExpiryLogEntry[]>(`/inventory/expiry-log?limit=${limit}`),
 
   deleteProducts: (ids: number[]) =>
     request<{ ok: boolean; deleted: number }>('/inventory/products/bulk-delete', {
