@@ -446,15 +446,17 @@ export default function TillView({
                   onClick={() => addToCart(p)}
                   disabled={stockOn && !!p.stock && p.quantity <= 0}
                 >
-                  {p.img && imagenesOn ? (
-                    <div className="product-thumb-wrap">
-                      <img className="product-thumb" src={`${uploads}/${p.img}`} alt="" />
-                    </div>
-                  ) : (
-                    <div className="product-thumb-wrap">
-                      <div className="product-thumb placeholder" />
-                    </div>
-                  )}
+                  {/* Imágenes apagadas: no se dibuja ni el recuadro vacío, solo el nombre. */}
+                  {imagenesOn &&
+                    (p.img ? (
+                      <div className="product-thumb-wrap">
+                        <img className="product-thumb" src={`${uploads}/${p.img}`} alt="" />
+                      </div>
+                    ) : (
+                      <div className="product-thumb-wrap">
+                        <div className="product-thumb placeholder" />
+                      </div>
+                    ))}
                   <div className="product-tile-body">
                     <strong>{p.name}</strong>
                     <span className="price">
