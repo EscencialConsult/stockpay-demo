@@ -18,6 +18,21 @@ function cleanExpiry(value) {
   return s;
 }
 
+/** Borra un archivo de foto SIN bloquear el proceso. `fs.unlinkSync` (y el
+ * `existsSync` previo) son llamadas síncronas — en este programa el mismo
+ * proceso de Node atiende la API y a la propia ventana de Electron, así
+ * que una sync de disco lenta (una foto grande, un antivirus interceptando
+ * el borrado) frena TODO el programa, no solo este pedido. Borrar varias
+ * fotos de un saque (selección múltiple, o borrar todo el catálogo) podía
+ * dejar la app trabada varios segundos. ENOENT (el archivo ya no está) se
+ * ignora: es el resultado esperado, no un error real. */
+function borrarFotoSinBloquear(path) {
+  if (!path) return;
+  fs.unlink(path, (err) => {
+    if (err && err.code !== 'ENOENT') console.error(err);
+  });
+}
+
 /** Registra una carga de vencimiento en el historial. Se llama desde cada
  * ruta que cambia la fecha, así el historial nunca queda desfasado. */
 function logExpiry(db, productId, productName, expiresOn, userName) {
@@ -48,11 +63,19 @@ export default function inventoryRouter(uploadsPath) {
     res.json(mapProduct(row));
   });
 
+  // Lectura de escáner: SOLO por código de barras, nunca por id ni por
+  // nombre. Antes hacía `code = ? OR id = ? OR name = ?` en una sola
+  // consulta — un código de prueba corto (p. ej. "7") podía coincidir con
+  // el id de OTRO producto y devolver ese, sin importar lo que ese otro
+  // producto tuviera guardado en su propio `code`. La búsqueda por id o por
+  // nombre exacto ya la hace el frontend como respaldo cuando esto no
+  // encuentra nada (ver TillView.onScan) — no hace falta repetirla acá, y
+  // repetirla acá es lo que causaba el match equivocado.
   router.post('/product/sku', (req, res) => {
-    const sku = String(req.body?.skuCode || '');
-    const row = getDb()
-      .prepare('SELECT * FROM products WHERE code = ? OR id = ? OR name = ?')
-      .get(sku, parseInt(sku, 10) || -1, sku);
+    const sku = String(req.body?.skuCode || '').trim();
+    const row = sku
+      ? getDb().prepare('SELECT * FROM products WHERE code = ?').get(sku)
+      : undefined;
     res.json(mapProduct(row));
   });
 
@@ -78,12 +101,7 @@ export default function inventoryRouter(uploadsPath) {
       }
 
       if (features.images && String(body.remove) === '1' && body.img) {
-        const oldPath = safeUploadPath(uploadsPath, body.img);
-        try {
-          if (oldPath && fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
-        } catch (err) {
-          console.error(err);
-        }
+        borrarFotoSinBloquear(safeUploadPath(uploadsPath, body.img));
         if (!req.file) image = '';
       }
 
@@ -95,6 +113,20 @@ export default function inventoryRouter(uploadsPath) {
         ? current?.quantity ?? 0
         : body.quantity === '' || body.quantity == null ? 0 : parseInt(body.quantity, 10);
       const typedCode = String(body.code || '').trim();
+
+      // Dos productos con el mismo código, sin que nadie avise, era lo que
+      // dejaba que un escaneo devolviera el producto equivocado — la base
+      // no tenía ninguna restricción que lo impidiera. Un código tipeado a
+      // mano (no uno generado solo, que ya es único por id) se rechaza si
+      // otro producto ya lo tiene.
+      if (typedCode) {
+        const dup = getDb()
+          .prepare('SELECT id, name FROM products WHERE code = ? AND id != ?')
+          .get(typedCode, body.id ? parseInt(body.id, 10) : -1);
+        if (dup) {
+          return res.status(400).json({ error: `Ese código ya lo tiene "${dup.name}"` });
+        }
+      }
 
       // Vencimientos apagados: la fecha guardada no se toca y no se registra en el historial.
       let expiresOn = current?.expires_on || '';
@@ -196,14 +228,7 @@ export default function inventoryRouter(uploadsPath) {
     const id = parseInt(req.params.productId, 10);
     const row = getDb().prepare('SELECT img FROM products WHERE id = ?').get(id);
     getDb().prepare('DELETE FROM products WHERE id = ?').run(id);
-    if (row?.img) {
-      const imgPath = safeUploadPath(uploadsPath, row.img);
-      try {
-        if (imgPath && fs.existsSync(imgPath)) fs.unlinkSync(imgPath);
-      } catch (err) {
-        console.error(err);
-      }
-    }
+    if (row?.img) borrarFotoSinBloquear(safeUploadPath(uploadsPath, row.img));
     res.sendStatus(200);
   });
 
@@ -224,14 +249,7 @@ export default function inventoryRouter(uploadsPath) {
         const row = getImg.get(id);
         const result = del.run(id);
         if (result.changes) deleted += 1;
-        if (row?.img) {
-          const imgPath = safeUploadPath(uploadsPath, row.img);
-          try {
-            if (imgPath && fs.existsSync(imgPath)) fs.unlinkSync(imgPath);
-          } catch (err) {
-            console.error(err);
-          }
-        }
+        if (row?.img) borrarFotoSinBloquear(safeUploadPath(uploadsPath, row.img));
       }
     })();
 

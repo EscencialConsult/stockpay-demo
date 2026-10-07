@@ -74,7 +74,12 @@ export default function Selector({ value, options, onChange, placeholder = 'Eleg
 
   const onTriggerKeyDown = (e: KeyboardEvent) => {
     if (disabled) return;
-    if (e.key === 'ArrowDown' || e.key === 'Enter' || e.key === ' ') {
+    // Enter o espacio abren, a propósito NO flecha abajo: este sistema usa
+    // las flechas para moverse por toda la pantalla (ver conFlechas /
+    // flechasEnLaPantalla). Si ArrowDown también abriera la lista, pasar
+    // de largo con el teclado por encima de un Selector lo abría solo —
+    // apenas el foco pasaba un instante por acá, quedaba abierto.
+    if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
       openList();
     }

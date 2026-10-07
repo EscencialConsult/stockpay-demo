@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { getDb } from '../db.js';
 import { requireAnyPerm } from '../auth.js';
 import { WALK_IN_CUSTOMER } from '../constants.js';
+import { generateEan13 } from '../barcode.js';
 
 const router = Router();
 
@@ -51,10 +52,16 @@ router.post('/seed', requireAnyPerm('perm_products', 'perm_settings'), (_req, re
       `INSERT INTO products (name, price, category, quantity, stock, img)
        VALUES (?, ?, ?, ?, 1, '')`
     );
+    const setCode = db.prepare('UPDATE products SET code = ? WHERE id = ?');
     for (const p of DEMO_PRODUCTS) {
       const existing = db.prepare('SELECT id FROM products WHERE name = ?').get(p.name);
       if (!existing) {
-        insertProduct.run(p.name, p.price, p.category, p.quantity);
+        const result = insertProduct.run(p.name, p.price, p.category, p.quantity);
+        // Sin esto el producto de ejemplo quedaba con code = '' para
+        // siempre — nunca escaneable, a diferencia de uno cargado a mano
+        // (que siempre recibe un código, tipeado o generado). Mismo
+        // generador que usa /inventory/product.
+        setCode.run(generateEan13(result.lastInsertRowid), result.lastInsertRowid);
         productsAdded += 1;
       }
     }

@@ -91,9 +91,13 @@ export default function CatalogView({
     fd.append('img', form.img);
     fd.append('code', form.code.trim());
     fd.append('expires_on', form.expires_on);
-    await api.saveProduct(fd);
-    setForm(emptyProduct);
-    await onChanged();
+    try {
+      await api.saveProduct(fd);
+      setForm(emptyProduct);
+      await onChanged();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'No se pudo guardar el producto');
+    }
   };
 
   const editProduct = (p: Product) => {
