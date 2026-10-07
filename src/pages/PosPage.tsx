@@ -18,6 +18,7 @@ import TransactionsModal from '../components/TransactionsModal';
 import ClosuresView from './ClosuresView';
 import Modal from '../components/Modal';
 import Selector from '../components/Selector';
+import { useConfirm } from '../components/useConfirm';
 import MenuAcciones from '../components/MenuAcciones';
 import { MENU, VIEW_TITLES } from '../config/menu';
 import { PRODUCT_NAME } from '../config/textos';
@@ -203,6 +204,7 @@ function CustomersPanel({
   const [detalle, setDetalle] = useState<Customer | null>(null);
   const [movimientos, setMovimientos] = useState<Awaited<ReturnType<typeof api.getCustomerAccount>> | null>(null);
   const [detalleError, setDetalleError] = useState<string | null>(null);
+  const { confirm, elemento: confirmElemento } = useConfirm();
 
   useEffect(() => setList(customers), [customers]);
 
@@ -269,7 +271,7 @@ function CustomersPanel({
   };
 
   const remove = async (id: number) => {
-    if (!confirm('¿Eliminar cliente?')) return;
+    if (!(await confirm('¿Eliminar cliente?'))) return;
     await api.deleteCustomer(id);
     await onChanged();
   };
@@ -462,6 +464,7 @@ function CustomersPanel({
           </>
         )}
       </Modal>
+      {confirmElemento}
     </div>
   );
 }

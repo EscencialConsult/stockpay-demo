@@ -47,6 +47,11 @@ export default function PhotoPicker({ value, onChange, label = 'Foto' }: Props) 
     }
   };
 
+  // Nota: sigue con confirm() nativo a propósito, no con useConfirm(). Este
+  // modal ya vive ADENTRO del modal "Biblioteca de fotos", y modalActivo.ts
+  // guarda un solo modal activo, no una pila — anidar un segundo Modal
+  // propio acá pisaría la referencia del de afuera al cerrarse. Pendiente
+  // de resolver cuando modalActivo soporte apilar.
   const removeFromLibrary = async (id: number) => {
     if (!confirm('¿Quitar esta imagen de la biblioteca?')) return;
     await api.deleteMedia(id);

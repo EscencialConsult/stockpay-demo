@@ -7,6 +7,7 @@ import PrintLabel from '../components/PrintLabel';
 import CargaVencimientos from '../components/CargaVencimientos';
 import VencimientosModal from '../components/VencimientosModal';
 import AvisoVencimientos from '../components/AvisoVencimientos';
+import { useConfirm } from '../components/useConfirm';
 import { sanitizeDecimal, sanitizeInteger } from '../lib/numericInput';
 import {
   COLOR_ESTADO,
@@ -63,6 +64,7 @@ export default function CatalogView({
   const [labelProduct, setLabelProduct] = useState<Product | null>(null);
   const [showVencimientos, setShowVencimientos] = useState(false);
   const uploads = getUploadsBase();
+  const { confirm, elemento: confirmElemento } = useConfirm();
 
   useEffect(() => {
     setList(products);
@@ -116,7 +118,7 @@ export default function CatalogView({
   };
 
   const removeProduct = async (id: number) => {
-    if (!confirm('¿Eliminar este producto?')) return;
+    if (!(await confirm('¿Eliminar este producto?'))) return;
     await api.deleteProduct(id);
     await onChanged();
   };
@@ -149,7 +151,7 @@ export default function CatalogView({
 
   const bulkDelete = async () => {
     if (!selected.length) return;
-    if (!confirm(`¿Eliminar ${selected.length} producto(s) seleccionado(s)?`)) return;
+    if (!(await confirm(`¿Eliminar ${selected.length} producto(s) seleccionado(s)?`))) return;
     setBusy(true);
     setError(null);
     try {
@@ -190,7 +192,7 @@ export default function CatalogView({
   };
 
   const removeCategory = async (id: number) => {
-    if (!confirm('¿Eliminar esta categoría?')) return;
+    if (!(await confirm('¿Eliminar esta categoría?'))) return;
     await api.deleteCategory(id);
     await onChanged();
   };
@@ -525,6 +527,7 @@ export default function CatalogView({
         products={list}
       />
       <PrintLabel product={labelProduct} symbol={symbol} onDone={() => setLabelProduct(null)} />
+      {confirmElemento}
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api, Features, FEATURES_DEFAULT, Settings } from '../api/client';
+import { useConfirm } from '../components/useConfirm';
 
 /** Textos de cada módulo. Apagar uno nunca borra datos (se explica abajo en la pantalla). */
 const MODULOS: { key: keyof Features; label: string; descripcion: string }[] = [
@@ -53,6 +54,7 @@ export default function SettingsView({ settings, onSaved }: Props) {
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [demoBusy, setDemoBusy] = useState(false);
+  const { confirm, elemento: confirmElemento } = useConfirm();
 
   useEffect(() => {
     (async () => {
@@ -123,13 +125,10 @@ export default function SettingsView({ settings, onSaved }: Props) {
   };
 
   const clearDemo = async () => {
-    if (
-      !confirm(
-        '¿Borrar TODOS los productos, categorías, historial de ventas y clientes (excepto Consumidor final)? Esta acción no se puede deshacer.'
-      )
-    ) {
-      return;
-    }
+    const ok = await confirm(
+      '¿Borrar TODOS los productos, categorías, historial de ventas y clientes (excepto Consumidor final)? Esta acción no se puede deshacer.'
+    );
+    if (!ok) return;
     setError(null);
     setMessage(null);
     setDemoBusy(true);
@@ -296,6 +295,7 @@ export default function SettingsView({ settings, onSaved }: Props) {
           </button>
         </div>
       </div>
+      {confirmElemento}
     </div>
   );
 }
