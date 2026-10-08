@@ -1,6 +1,6 @@
 {
   "name": "stockpay-web-demo",
-  "version": "2.5.3",
+  "version": "2.5.4",
   "description": "Demo web de StockPay (sin Electron) para mostrar el sistema a clientes sin instalar nada",
   "author": "Hosting Domain",
   "private": true,
