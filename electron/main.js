@@ -53,6 +53,24 @@ let backupTimer = null;
 
 const BACKUP_INTERVAL_MS = 60 * 60 * 1000;
 
+// Sin esto, abrir la app dos veces (doble clic antes de que cargue la
+// primera vez, o un acceso directo apretado dos veces) lanza dos procesos
+// que compiten por el puerto 8001. El segundo pierde esa carrera, su
+// servidor nunca arranca, y la ventana igual se abre y muestra "el
+// servidor local no responde" — un error real pero con causa invisible
+// para quien lo ve. process.exit corta el arranque del segundo proceso
+// antes de que llegue a intentar levantar su propio servidor.
+if (!app.requestSingleInstanceLock()) {
+  app.quit();
+  process.exit(0);
+}
+app.on('second-instance', () => {
+  if (mainWindow) {
+    if (mainWindow.isMinimized()) mainWindow.restore();
+    mainWindow.focus();
+  }
+});
+
 function getUserDataPaths() {
   const root = path.join(app.getPath('userData'), 'POS');
   return {
